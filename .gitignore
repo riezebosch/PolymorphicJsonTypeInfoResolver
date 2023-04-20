@@ -6,3 +6,5 @@ riderModule.iml
 dist/
 *.user
 .idea/
+TestResults/
+reports/
