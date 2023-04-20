@@ -10,7 +10,7 @@ public static class Options {
                     .Assembly
                     .GetTypes()
                     .Where(t => t.IsAssignableTo(targetType))
-                    .Where(t => t != targetType)) {
+                    .Where(t => !t.IsAbstract)) {
             options.Has(derived, type(derived));
         }
         return options;

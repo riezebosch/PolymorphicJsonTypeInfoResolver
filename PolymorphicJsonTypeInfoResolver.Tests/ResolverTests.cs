@@ -152,4 +152,19 @@ public class ResolverTests {
             "$type":"c"
             """);
     }
+    
+    [Fact]
+    public void AddAllDerivedOwnType() {
+        var original = new C("cheap");
+        var resolver = new PolymorphicTypeInfoResolver()
+            .Type<C>(x => x.AddAllDerived());
+
+        var json = JsonSerializer.Serialize(original, new JsonSerializerOptions {
+            TypeInfoResolver = resolver
+        });
+
+        json.Should().Contain("""
+            "$type":"C"
+            """);
+    }
 }
