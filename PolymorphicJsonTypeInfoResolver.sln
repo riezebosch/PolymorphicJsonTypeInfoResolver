@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PolymorphicJsonTypeInfoResolver", "PolymorphicJsonTypeInfoResolver\PolymorphicJsonTypeInfoResolver.csproj", "{3571E614-E4B6-44CC-A614-E0FFEFAC5F5A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PolymorphicJsonTypeInfoResolver.Tests", "PolymorphicJsonTypeInfoResolver.Tests\PolymorphicJsonTypeInfoResolver.Tests.csproj", "{3F3F8524-3581-4BA6-A4B5-C1CBFD124C96}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3571E614-E4B6-44CC-A614-E0FFEFAC5F5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3571E614-E4B6-44CC-A614-E0FFEFAC5F5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3571E614-E4B6-44CC-A614-E0FFEFAC5F5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3571E614-E4B6-44CC-A614-E0FFEFAC5F5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3F3F8524-3581-4BA6-A4B5-C1CBFD124C96}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F3F8524-3581-4BA6-A4B5-C1CBFD124C96}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F3F8524-3581-4BA6-A4B5-C1CBFD124C96}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F3F8524-3581-4BA6-A4B5-C1CBFD124C96}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
