@@ -11,7 +11,7 @@
         <NeutralLanguage>en-US</NeutralLanguage>
         <AssemblyTitle>PolymorphicJsonTypeInfoResolver</AssemblyTitle>
         <Description>Configure polymorphism with the contract model</Description>
-        <PackageReleaseNotes>.</PackageReleaseNotes>
+        <PackageReleaseNotes>Breaking change: using `JsonPolymorphismOptions` instead of wrapping in own builder.</PackageReleaseNotes>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageTags>json;polymorphic;system.text.json;serializer</PackageTags>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
