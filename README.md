@@ -6,8 +6,8 @@
 [![maintainability](https://api.codeclimate.com/v1/badges/a1220004f50965c81331/maintainability)](https://codeclimate.com/github/riezebosch/PolymorphicJsonTypeInfoResolver/maintainability)
 [![Build status](https://ci.appveyor.com/api/projects/status/vb4vs3l7a22rgfs2/branch/main?svg=true)](https://ci.appveyor.com/project/riezebosch/polymorphicjsontypeinforesolver/branch/main)
 
-
-Using [polymorphism with the contract model](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/polymorphism?pivots=dotnet-7-0#configure-polymorphism-with-the-contract-model) available since `.NET7+`.
+Using [polymorphism with the contract model](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/polymorphism?pivots=dotnet-7-0#configure-polymorphism-with-the-contract-model)
+available since `.NET7+`.
 
 ```csharp
 var options = new JsonSerializerOptions {
@@ -26,6 +26,7 @@ var json = JsonSerializer.Serialize(new A(new C("cheap")), options);
     }
 }
 ```
+
 Factory for default options:
 
 ```csharp

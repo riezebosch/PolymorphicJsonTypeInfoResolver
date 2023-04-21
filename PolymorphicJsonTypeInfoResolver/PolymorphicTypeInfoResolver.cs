@@ -11,8 +11,8 @@ public class PolymorphicTypeInfoResolver : IJsonTypeInfoResolver {
     private readonly IJsonTypeInfoResolver _resolver;
     private readonly Dictionary<Type, JsonPolymorphismOptions> _types = new();
 
-    public PolymorphicTypeInfoResolver(IJsonTypeInfoResolver? resolver = null, Func<JsonPolymorphismOptions>? options = null)
-    {
+    public PolymorphicTypeInfoResolver(IJsonTypeInfoResolver? resolver = null,
+        Func<JsonPolymorphismOptions>? options = null) {
         _resolver = resolver ?? new DefaultJsonTypeInfoResolver();
         _options = options ?? (() => new JsonPolymorphismOptions());
     }
@@ -20,7 +20,7 @@ public class PolymorphicTypeInfoResolver : IJsonTypeInfoResolver {
     public JsonTypeInfo? GetTypeInfo(Type type, JsonSerializerOptions options) {
         var info = _resolver.GetTypeInfo(type, options);
         if (info == null) return info;
-        
+
         info.PolymorphismOptions = _types.TryGetValue(info.Type, out var poly)
             ? poly
             : null;
@@ -28,8 +28,7 @@ public class PolymorphicTypeInfoResolver : IJsonTypeInfoResolver {
         return info;
     }
 
-    public PolymorphicTypeInfoResolver Type<T>(Action<JsonPolymorphismOptions> use)
-    {
+    public PolymorphicTypeInfoResolver Type<T>(Action<JsonPolymorphismOptions> use) {
         use(_types[typeof(T)] = _options());
         return this;
     }
