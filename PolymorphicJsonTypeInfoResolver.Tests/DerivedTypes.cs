@@ -10,6 +10,14 @@ public static class DerivedTypes {
 
     private record C : B;
 
+    private record G<T> : B;
+
+    private record D(IFormattable Format);
+
+    private class E : IFormattable {
+        public string ToString(string? format, IFormatProvider? formatProvider) => "x";
+    }
+
     [Fact]
     public static void Add() {
         const string json = """
@@ -23,7 +31,9 @@ public static class DerivedTypes {
 
         var options = new JsonSerializerOptions {
             TypeInfoResolver = new PolymorphicTypeInfoResolver()
-                .Type<B>(x => x.DerivedTypes.Add<C>("type-c"))
+                .Type<B>(x => x
+                    .DerivedTypes
+                    .Add<C>("type-c"))
         };
 
         var result = JsonSerializer.Deserialize<A>(json, options)!;
@@ -38,7 +48,8 @@ public static class DerivedTypes {
     public static void AddWithDefaultName() {
         var options = new JsonSerializerOptions {
             TypeInfoResolver = new PolymorphicTypeInfoResolver()
-                .Type<B>(x => x.DerivedTypes.Add<C>())
+                .Type<B>(x => x.DerivedTypes
+                    .Add<C>())
         };
 
         var json = JsonSerializer.Serialize(new A(new C()), options);
@@ -52,7 +63,9 @@ public static class DerivedTypes {
     public static void AddAllAssignableTo() {
         var options = new JsonSerializerOptions {
             TypeInfoResolver = new PolymorphicTypeInfoResolver()
-                .Type<B>(x => x.DerivedTypes.AddAllAssignableTo<B>())
+                .Type<B>(x => x
+                    .DerivedTypes
+                    .AddAllAssignableTo<B>())
         };
 
         var json = JsonSerializer.Serialize(new A(new C()), options);
@@ -91,6 +104,36 @@ public static class DerivedTypes {
 
         json.Should().Contain("""
             "$type":"C"
+            """);
+    }
+
+    [Fact]
+    public static void AddAllAssignableToDoesNotIncludeGenerics() {
+        var options = new JsonSerializerOptions {
+            TypeInfoResolver = new PolymorphicTypeInfoResolver()
+                .Type<B>(x => x
+                    .DerivedTypes
+                    .AddAllAssignableTo<B>())
+        };
+
+        var act = () => JsonSerializer.Serialize(new A(new G<int>()), options);
+
+        act.Should().Throw<NotSupportedException>();
+    }
+
+    [Fact]
+    public static void AddAllAssignableToFromAssembly() {
+        var options = new JsonSerializerOptions {
+            TypeInfoResolver = new PolymorphicTypeInfoResolver()
+                .Type<IFormattable>(x => x
+                    .DerivedTypes
+                    .AddAllAssignableTo<IFormattable, E>())
+        };
+
+        var json = JsonSerializer.Serialize(new D(new E()), options);
+
+        json.Should().Contain("""
+            "$type":"E"
             """);
     }
 }

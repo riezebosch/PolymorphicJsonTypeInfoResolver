@@ -1,4 +1,4 @@
 [*.cs]
 csharp_new_line_before_open_brace = none
 trim_trailing_whitespace = true
-
+max_line_length=450
