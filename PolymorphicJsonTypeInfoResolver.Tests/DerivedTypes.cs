@@ -5,15 +5,10 @@ namespace PolymorphicJsonTypeInfoResolver.Tests;
 
 public static class DerivedTypes {
     private record A(B Specification);
-
     private abstract record B;
-
-    private record C : B;
-
+    private record C(string Remark) : B;
     private record G<T> : B;
-
     private record D(IFormattable Format);
-
     private class E : IFormattable {
         public string ToString(string? format, IFormatProvider? formatProvider) => "x";
     }
@@ -24,7 +19,7 @@ public static class DerivedTypes {
             {
                 "Specification": {
                     "$type":"type-c",
-                    "Remarks":"cheap"
+                    "Remark":"cheap"
                 }
             }
             """;
@@ -41,7 +36,7 @@ public static class DerivedTypes {
         result
             .Specification
             .Should()
-            .Be(new C());
+            .Be(new C("cheap"));
     }
 
     [Fact]
@@ -52,7 +47,7 @@ public static class DerivedTypes {
                     .Add<C>())
         };
 
-        var json = JsonSerializer.Serialize(new A(new C()), options);
+        var json = JsonSerializer.Serialize(new A(new C("cheap")), options);
 
         json.Should().Contain("""
             "$type":"C"
@@ -68,7 +63,7 @@ public static class DerivedTypes {
                     .AddAllAssignableTo<B>())
         };
 
-        var json = JsonSerializer.Serialize(new A(new C()), options);
+        var json = JsonSerializer.Serialize(new A(new C("cheap")), options);
 
         json.Should().Contain("""
             "$type":"C"
@@ -84,7 +79,7 @@ public static class DerivedTypes {
                     .AddAllAssignableTo<B>(t => $"type:{t.Name}"))
         };
 
-        var json = JsonSerializer.Serialize(new A(new C()), options);
+        var json = JsonSerializer.Serialize(new A(new C("cheap")), options);
 
         json.Should().Contain("""
             "$type":"type:C"
@@ -100,7 +95,7 @@ public static class DerivedTypes {
                     .AddAllAssignableTo<C>())
         };
 
-        var json = JsonSerializer.Serialize(new C(), options);
+        var json = JsonSerializer.Serialize(new C("cheap"), options);
 
         json.Should().Contain("""
             "$type":"C"
