@@ -16,7 +16,11 @@ public class Resolver {
     public static void Serialize() {
         var options = new JsonSerializerOptions {
             TypeInfoResolver = new PolymorphicTypeInfoResolver()
-                .Type<B>(x => x.DerivedTypes.Add(new JsonDerivedType(typeof(C), "c")))
+                .Type<B>(new JsonPolymorphismOptions {
+                    DerivedTypes = {
+                        new (typeof(C), "c")
+                    }
+                })
         };
 
         var json = JsonSerializer.Serialize(new A(new C("cheap")), options);

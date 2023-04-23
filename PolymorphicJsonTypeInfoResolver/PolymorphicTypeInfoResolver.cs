@@ -32,4 +32,9 @@ public class PolymorphicTypeInfoResolver : IJsonTypeInfoResolver {
         use(_types[typeof(T)] = _options());
         return this;
     }
+
+    public PolymorphicTypeInfoResolver Type<T>(JsonPolymorphismOptions options) {
+        _types[typeof(T)] = options;
+        return this;
+    }
 }
