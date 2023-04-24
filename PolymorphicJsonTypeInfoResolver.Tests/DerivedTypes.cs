@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using FluentAssertions;
 
@@ -10,7 +11,7 @@ public static class DerivedTypes {
     private record G<T> : B;
     private record D(IFormattable Format);
     private class E : IFormattable {
-        public string ToString(string? format, IFormatProvider? formatProvider) => "x";
+        [ExcludeFromCodeCoverage] public string ToString(string? format, IFormatProvider? formatProvider) => "x";
     }
 
     [Fact]
@@ -28,7 +29,8 @@ public static class DerivedTypes {
             TypeInfoResolver = new PolymorphicTypeInfoResolver()
                 .Type<B>(x => x
                     .DerivedTypes
-                    .Add<C>("type-c"))
+                    .Add<C>("type-c")
+                    .Verify<B>())
         };
 
         var result = JsonSerializer.Deserialize<A>(json, options)!;
