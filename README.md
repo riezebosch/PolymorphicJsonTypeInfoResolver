@@ -28,6 +28,8 @@ dotnet add package PolymorphicJsonTypeInfoResolver
 
 ## Usage
 
+### Stable contracts
+
 Here's an example of how to use Polymorphic Json Type Info Resolver:
 
 ```csharp
@@ -36,16 +38,15 @@ var options = new JsonSerializerOptions {
         .Type<Shape>(x => x
             .DerivedTypes
             .Add<Square>("square")
-            .Add<Circle>("circle"))
+            .Add<Circle>("circle")
+            .Verify<Shape>()
+            .Verify<Shape, SomeOtherLibrary.Polygon>())
 };
         
 var json = JsonSerializer.Serialize(new Box(new Circle(10)), options);
 ```
 
-In the above code snippet, we create a new instance of JsonSerializerOptions and set its TypeInfoResolver property to an instance of PolymorphicTypeInfoResolver. We then configure the resolver to serialize objects of type Shape with a $type property that specifies the derived type (Square or Circle). Finally, we serialize a Box object containing a Circle object with a radius of 10.
-
-> **Remark**: the `Add` method can use the type name for discriminator, but I'm not sure that's a good idea after all.
-Since it is part of your contract you may want to decouple it so it does not automatically change as part of refactoring. 
+The result will look like this:
 
 ```json
 {
@@ -55,6 +56,42 @@ Since it is part of your contract you may want to decouple it so it does not aut
     }
 }
 ```
+
+In the above code snippet, we create a new instance of JsonSerializerOptions and set its TypeInfoResolver property to an 
+instance of PolymorphicTypeInfoResolver. We then configure the resolver to serialize objects of type Shape with a `$type` 
+property that specifies the derived type (`Square` or `Circle`). 
+
+Finally we verify that all derived types from the same assembly and all types from a another assembly are mapped. The 
+verification is optional, but it prevents you from the runtime exception:
+
+```csharp
+System.NotSupportedException 
+  Runtime type 'SomeOtherLibrary.Polygon' is not supported by polymorphic type 'YourLibrary.Shape'. Path: $.Shape.
+```
+
+### Add All Derived Types 
+
+To opt-in to all derived types from its own assembly or the specified assembly, you can use the following code:
+
+```csharp
+new JsonSerializerOptions {
+    TypeInfoResolver = new PolymorphicTypeInfoResolver()
+        .Type<Shape>(x => x
+            .DerivedTypes
+            .AddAllAssignableTo<Shape>(t => t.Name)
+            .AddAllAssignableTo<Shape, SomeOtherLibrary.Parallelogram>(t => t.Name))
+};
+```
+
+In the above code snippet, we create a new instance of `JsonSerializerOptions` and set its `TypeInfoResolver` property
+to an instance of `PolymorphicTypeInfoResolver`. We then configure the resolver to serialize objects of type `Shape`
+with all derived types assignable to `Shape` from its own assembly and the assembly where `Parallelogram` is located with their name
+as the type discriminator.
+
+> **Note:** Using the type name for discriminator may result in unstable contracts since you will not be able to deserialize
+> data when you change the type name as part of some refactoring!
+
+## Advanced Features
 
 To supply a factory for the polymorphic JSON options, you can use the following code:
 
@@ -66,26 +103,9 @@ var options = new JsonSerializerOptions {
 };
 ```
 
-In the above code snippet, we create a new instance of `JsonSerializerOptions` and set its `TypeInfoResolver` property to an 
+In the above code snippet, we create a new instance of `JsonSerializerOptions` and set its `TypeInfoResolver` property to an
 instance of `PolymorphicTypeInfoResolver`. We then supply a factory function that returns an instance of `JsonPolymorphismOptions`
 with a custom `$TYPE` type discriminator property name.
-
-To opt-in to all derived types from its own assembly or the specified assembly, you can use the following code:
-
-```csharp
-new JsonSerializerOptions {
-    TypeInfoResolver = new PolymorphicTypeInfoResolver()
-        .Type<Shape>(x => x
-            .DerivedTypes
-            .AddAllAssignableTo<Shape>(t => t.Name)
-            .AddAllAssignableTo<Shape, Parallelogram>(t => t.Name))
-};
-```
-
-In the above code snippet, we create a new instance of `JsonSerializerOptions` and set its `TypeInfoResolver` property
-to an instance of `PolymorphicTypeInfoResolver`. We then configure the resolver to serialize objects of type `Shape`
-with all derived types assignable to `Shape` from its own assembly and the assembly where `Parallelogram` is located with their name
-as the type discriminator.
 
 > **Remark**: this readme was peer-reviewed by ChatGPT.
 

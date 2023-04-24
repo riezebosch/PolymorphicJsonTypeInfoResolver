@@ -131,4 +131,28 @@ public static class DerivedTypes {
             "$type":"E"
             """);
     }
+
+    [Fact]
+    public static void Verify() {
+        var act = () => new PolymorphicTypeInfoResolver()
+            .Type<B>(x => x
+                .DerivedTypes
+                .Verify<B>());
+
+        act.Should()
+            .Throw<MissingDerivedTypesException>()
+            .WithMessage("*+C");
+    }
+
+    [Fact]
+    public static void VerifyFromAssembly() {
+        var act = () => new PolymorphicTypeInfoResolver()
+            .Type<IFormattable>(x => x
+                .DerivedTypes
+                .Verify<IFormattable, E>());
+
+        act.Should()
+            .Throw<MissingDerivedTypesException>()
+            .WithMessage("*+E");
+    }
 }

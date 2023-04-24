@@ -34,10 +34,27 @@ public static class AddDerivedTypes {
     public static IList<JsonDerivedType> AddAllAssignableTo<T>(this IList<JsonDerivedType> types, Func<Type, string>? discriminator = null) =>
         types.AddAllAssignableTo<T, T>(discriminator);
 
+
+    public static IList<JsonDerivedType> Verify(this IList<JsonDerivedType> types, Type type, Assembly assembly) {
+        var missing = Types(type, assembly)
+            .Except(types.Select(t => t.DerivedType))
+            .ToList();
+
+        if (missing.Any()) {
+            throw new MissingDerivedTypesException(missing);
+        }
+
+        return types;
+    }
+
+    public static IList<JsonDerivedType> Verify<T, TAssembly>(this IList<JsonDerivedType> types) =>
+        types.Verify(typeof(T), typeof(TAssembly).Assembly);
+
+    public static IList<JsonDerivedType> Verify<T>(this IList<JsonDerivedType> types) =>
+        types.Verify<T, T>();
+
     private static IEnumerable<Type> Types(Type type, Assembly assembly) =>
         assembly
             .GetTypes()
-            .Where(t => !t.IsAbstract)
-            .Where(t => !t.IsGenericType)
-            .Where(t => t.IsAssignableTo(type));
+            .Where(t => t is { IsAbstract: false, IsGenericType: false } && t.IsAssignableTo(type));
 }
