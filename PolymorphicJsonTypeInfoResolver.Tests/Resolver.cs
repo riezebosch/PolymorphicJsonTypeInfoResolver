@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using FluentAssertions;
 using NSubstitute;
@@ -8,9 +9,14 @@ namespace PolymorphicJsonTypeInfoResolver.Tests;
 public class Resolver {
     private record A(B Specification);
 
+    [JsonDerivedType(typeof(D), "type-d")]
+    [JsonPolymorphic]
     private abstract record B;
 
     private record C(string Remarks) : B;
+
+    private record D : B;
+
 
     [Fact]
     public static void Serialize() {
@@ -28,6 +34,37 @@ public class Resolver {
         json.Should().Contain("""
             "$type":"c"
             """);
+    }
+
+    [Fact]
+    public static void WithAttributes() {
+        var options = new JsonSerializerOptions {
+            TypeInfoResolver = new PolymorphicTypeInfoResolver()
+        };
+
+        var json = JsonSerializer.Serialize(new A(new D()), options);
+
+        json.Should().Contain("""
+            "$type":"type-d"
+            """);
+    }
+
+    [Fact]
+    public static void MixWithAttributes() {
+        var options = new JsonSerializerOptions {
+            TypeInfoResolver = new PolymorphicTypeInfoResolver()
+                .Type<B>(new JsonPolymorphismOptions {
+                    DerivedTypes = {
+                        new (typeof(C), "c")
+                    }
+                })
+        };
+
+
+        var act = () => JsonSerializer.Serialize(new A(new D()), options);
+
+        act.Should().Throw<NotSupportedException>()
+            .WithMessage($"*'{typeof(D)}' is not supported by polymorphic type*");
     }
 
     [Fact]
@@ -62,7 +99,11 @@ public class Resolver {
 
         var options = new JsonSerializerOptions {
             TypeInfoResolver = new PolymorphicTypeInfoResolver()
-                .Type<B>(x => x.DerivedTypes.Add(new JsonDerivedType(typeof(C), "c")))
+                .Type<B>(new JsonPolymorphismOptions {
+                    DerivedTypes   = {
+                        new (typeof(C), "c")
+                    }
+                })
         };
 
         var result = JsonSerializer.Deserialize<A>(json, options)!;
