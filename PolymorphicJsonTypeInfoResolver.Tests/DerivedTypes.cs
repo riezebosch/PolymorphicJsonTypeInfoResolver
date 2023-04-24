@@ -142,6 +142,6 @@ public static class DerivedTypes {
 
         act.Should()
             .Throw<MissingDerivedTypesException>()
-            .WithMessage("*+E");
+            .WithMessage($"Missing derived types:* ? {typeof(E)}");
     }
 }
