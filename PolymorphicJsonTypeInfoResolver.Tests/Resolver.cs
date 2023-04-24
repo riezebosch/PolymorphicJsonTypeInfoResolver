@@ -22,12 +22,13 @@ public class Resolver {
     public static void Serialize() {
         var options = new JsonSerializerOptions {
             TypeInfoResolver = new PolymorphicTypeInfoResolver()
-                .Type<B>(new JsonPolymorphismOptions {
+                .With<B>(new JsonPolymorphismOptions {
                     DerivedTypes = {
                         new (typeof(C), "c"),
                         new (typeof(D), "d")
                     }
-                }).Build()
+                })
+                .Build()
         };
 
         var json = JsonSerializer.Serialize(new A(new C("cheap")), options);
@@ -54,11 +55,11 @@ public class Resolver {
     [Fact]
     public static void Options() {
         var options = new JsonSerializerOptions {
-            TypeInfoResolver = new PolymorphicTypeInfoResolver(options: () =>
+            TypeInfoResolver = new PolymorphicTypeInfoResolver(() =>
                     new JsonPolymorphismOptions {
                         TypeDiscriminatorPropertyName = "$TYPE"
                     })
-                .Type<C>(x => x
+                .With<C>(x => x
                     .DerivedTypes
                     .Add(new JsonDerivedType(typeof(C), "C")))
                 .Build()
@@ -84,7 +85,7 @@ public class Resolver {
 
         var options = new JsonSerializerOptions {
             TypeInfoResolver = new PolymorphicTypeInfoResolver()
-                .Type<B>(new JsonPolymorphismOptions {
+                .With<B>(new JsonPolymorphismOptions {
                     DerivedTypes   = {
                         new (typeof(C), "c"),
                         new (typeof(D), "d")
@@ -103,8 +104,8 @@ public class Resolver {
     [Fact]
     public void NoTypeInfo() {
         var options = new JsonSerializerOptions {
-            TypeInfoResolver = new PolymorphicTypeInfoResolver(resolver: Substitute.For<IJsonTypeInfoResolver>())
-                .Build()
+            TypeInfoResolver = new PolymorphicTypeInfoResolver()
+                .Build(Substitute.For<IJsonTypeInfoResolver>())
         };
 
         var act = () => JsonSerializer.Deserialize<C>("{}", options);
@@ -114,31 +115,25 @@ public class Resolver {
     [Fact]
     public void Verify() {
         var resolver = new PolymorphicTypeInfoResolver()
-            .Type<B>(new JsonPolymorphismOptions {
-                DerivedTypes = {
-                    new(typeof(C), "c")
-                }
-            });
+            .With<B>(x => x
+                .DerivedTypes
+                .Add<C>("c"));
 
         var act = () => resolver.Build();
         act.Should()
             .Throw<MissingDerivedTypesException>()
-            .WithMessage($"*{typeof(D)}");
+            .WithMessage($"Missing* ? {typeof(D)}");
     }
 
     [Fact]
     public void VerifyAll() {
         var resolver = new PolymorphicTypeInfoResolver()
-            .Type<B>(new JsonPolymorphismOptions {
-                DerivedTypes = {
-                    new(typeof(C), "c")
-                }
-            })
-            .Type<IFormattable>(new JsonPolymorphismOptions {
-                DerivedTypes = {
-                    new (typeof(int), "x")
-                }
-            });
+            .With<B>(x => x
+                .DerivedTypes
+                .Add<C>("c"))
+            .With<IFormattable>(x => x
+                .DerivedTypes
+                .Add<int>("x"));
 
         var act = () => resolver.Build();
         act.Should()

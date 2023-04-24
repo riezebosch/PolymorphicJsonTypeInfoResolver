@@ -8,46 +8,60 @@ namespace PolymorphicJsonTypeInfoResolver;
 /// </summary>
 public class PolymorphicTypeInfoResolver {
     private readonly Func<JsonPolymorphismOptions> _options;
-    private readonly IJsonTypeInfoResolver _resolver;
     private readonly Dictionary<Type, JsonPolymorphismOptions> _types = new();
 
-    public PolymorphicTypeInfoResolver(IJsonTypeInfoResolver? resolver = null, Func<JsonPolymorphismOptions>? options = null) {
-        _resolver = resolver ?? new DefaultJsonTypeInfoResolver();
-        _options = options ?? (() => new JsonPolymorphismOptions());
+    public PolymorphicTypeInfoResolver(Func<JsonPolymorphismOptions> options) {
+        _options = options;
     }
 
-    public PolymorphicTypeInfoResolver Type<T>(Action<JsonPolymorphismOptions> use) {
+    public PolymorphicTypeInfoResolver()
+        : this(() => new JsonPolymorphismOptions()) {
+    }
+
+    public PolymorphicTypeInfoResolver With<T>(Action<JsonPolymorphismOptions> use) {
         use(_types[typeof(T)] = _options());
         return this;
     }
 
-    public PolymorphicTypeInfoResolver Type<T>(JsonPolymorphismOptions options) {
+    public PolymorphicTypeInfoResolver With<T>(JsonPolymorphismOptions options) {
         _types[typeof(T)] = options;
         return this;
     }
 
-    public IJsonTypeInfoResolver Build() {
+    public IJsonTypeInfoResolver Build(IJsonTypeInfoResolver resolver) =>
+        new Resolver(resolver, Verify(_types));
+
+    public IJsonTypeInfoResolver Build() =>
+        Build(new DefaultJsonTypeInfoResolver());
+
+    private static IDictionary<Type, JsonPolymorphismOptions> Verify(IDictionary<Type, JsonPolymorphismOptions> types)
+    {
         var exceptions = new List<Exception>();
-        foreach (var (type, options) in _types) {
-            try {
-                options.DerivedTypes.Verify(type, options
-                    .DerivedTypes
-                    .Select(t => t.DerivedType.Assembly)
-                    .Distinct());
-            }
-            catch (Exception ex) {
-                exceptions.Add(ex);
+        foreach (var (type, options) in types)
+        {
+            var missing = Missing(options, type).ToList();
+            if (missing.Any())
+            {
+                exceptions.Add(new MissingDerivedTypesException(type, missing));
             }
         }
 
-        if (exceptions.Any()) {
-            throw  new AggregateException(exceptions);
+        if (exceptions.Any())
+        {
+            throw new AggregateException(exceptions);
         }
 
-        return new Resolver(_resolver, _types);
+        return types;
     }
 
-    private class Resolver : IJsonTypeInfoResolver {
+    private static IEnumerable<Type> Missing(JsonPolymorphismOptions options, Type type) =>
+        options.DerivedTypes
+            .Select(t => t.DerivedType.Assembly)
+            .Distinct()
+            .AssignableTo(type)
+            .Except(options.DerivedTypes.Select(t => t.DerivedType));
+
+    private sealed class Resolver : IJsonTypeInfoResolver {
         private readonly IJsonTypeInfoResolver _resolver;
         private readonly IDictionary<Type, JsonPolymorphismOptions> _types;
 

@@ -27,10 +27,9 @@ public static class DerivedTypes {
 
         var options = new JsonSerializerOptions {
             TypeInfoResolver = new PolymorphicTypeInfoResolver()
-                .Type<B>(x => x
+                .With<B>(x => x
                     .DerivedTypes
-                    .Add<C>("type-c")
-                    .Verify<B>())
+                    .Add<C>("type-c"))
                 .Build()
         };
 
@@ -46,10 +45,9 @@ public static class DerivedTypes {
     public static void AddFromAssembly() {
         var options = new JsonSerializerOptions {
             TypeInfoResolver = new PolymorphicTypeInfoResolver()
-                .Type<IFormattable>(x => x
+                .With<IFormattable>(x => x
                     .DerivedTypes
-                    .Add<E>("type-e")
-                    .Verify<IFormattable, E>())
+                    .Add<E>("type-e"))
                 .Build()
         };
 
@@ -58,96 +56,5 @@ public static class DerivedTypes {
         json.Should().Contain("""
             "$type":"type-e"
             """);
-    }
-
-    [Fact]
-    public static void AddAllAssignableTo() {
-        var options = new JsonSerializerOptions {
-            TypeInfoResolver = new PolymorphicTypeInfoResolver()
-                .Type<B>(x => x
-                    .DerivedTypes
-                    .AddAllAssignableTo<B>(t => t.Name))
-                .Build()
-        };
-
-        var json = JsonSerializer.Serialize(new A(new C("cheap")), options);
-
-        json.Should().Contain("""
-            "$type":"C"
-            """);
-    }
-
-    [Fact]
-    public static void AddAllAssignableToOwnType() {
-        var options = new JsonSerializerOptions {
-            TypeInfoResolver = new PolymorphicTypeInfoResolver()
-                .Type<C>(x => x
-                    .DerivedTypes
-                    .AddAllAssignableTo<C>(t => t.Name))
-                .Build()
-        };
-
-        var json = JsonSerializer.Serialize(new C("cheap"), options);
-
-        json.Should().Contain("""
-            "$type":"C"
-            """);
-    }
-
-    [Fact]
-    public static void AddAllAssignableToDoesNotIncludeGenerics() {
-        var options = new JsonSerializerOptions {
-            TypeInfoResolver = new PolymorphicTypeInfoResolver()
-                .Type<B>(x => x
-                    .DerivedTypes
-                    .AddAllAssignableTo<B>(t => t.Name))
-                .Build()
-        };
-
-        var act = () => JsonSerializer
-            .Serialize(new A(new G<int>(3)), options);
-
-        act.Should().Throw<NotSupportedException>();
-    }
-
-    [Fact]
-    public static void AddAllAssignableToFromAssembly() {
-        var options = new JsonSerializerOptions {
-            TypeInfoResolver = new PolymorphicTypeInfoResolver()
-                .Type<IFormattable>(x => x
-                    .DerivedTypes
-                    .AddAllAssignableTo<IFormattable, E>(t => t.Name))
-                .Build()
-        };
-
-        var json = JsonSerializer.Serialize(new D(new E()), options);
-
-        json.Should().Contain("""
-            "$type":"E"
-            """);
-    }
-
-    [Fact]
-    public static void Verify() {
-        var act = () => new PolymorphicTypeInfoResolver()
-            .Type<B>(x => x
-                .DerivedTypes
-                .Verify<B>());
-
-        act.Should()
-            .Throw<MissingDerivedTypesException>()
-            .WithMessage("*+C");
-    }
-
-    [Fact]
-    public static void VerifyFromAssembly() {
-        var act = () => new PolymorphicTypeInfoResolver()
-            .Type<IFormattable>(x => x
-                .DerivedTypes
-                .Verify<IFormattable, E>());
-
-        act.Should()
-            .Throw<MissingDerivedTypesException>()
-            .WithMessage($"Missing derived types* ? {typeof(E)}");
     }
 }
