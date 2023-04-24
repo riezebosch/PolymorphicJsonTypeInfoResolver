@@ -39,7 +39,7 @@ public static class DerivedTypes {
             .ToList();
 
         if (missing.Any()) {
-            throw new MissingDerivedTypesException(missing);
+            throw new MissingDerivedTypesException(type, missing);
         }
 
         return types;

@@ -3,16 +3,16 @@ using System.Text;
 namespace PolymorphicJsonTypeInfoResolver;
 
 public class MissingDerivedTypesException : Exception {
-    public MissingDerivedTypesException(IEnumerable<Type> missing) : base(Format(missing)){
+    public MissingDerivedTypesException(Type type, IEnumerable<Type> missing) : base(Format(type, missing)){
     }
 
-    private static string Format(IEnumerable<Type> missing) {
-        var sb = new StringBuilder("Missing derived types:")
+    private static string Format(Type type, IEnumerable<Type> missing) {
+        var sb = new StringBuilder($"Missing derived types for '{type}':")
             .AppendLine();
 
-        foreach (var type in missing) {
+        foreach (var t in missing) {
             sb.Append(" * ");
-            sb.AppendLine(type.FullName);
+            sb.AppendLine(t.FullName);
         }
 
         return sb.ToString();

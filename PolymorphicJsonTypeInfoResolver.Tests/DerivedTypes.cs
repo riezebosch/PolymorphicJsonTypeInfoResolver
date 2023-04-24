@@ -31,6 +31,7 @@ public static class DerivedTypes {
                     .DerivedTypes
                     .Add<C>("type-c")
                     .Verify<B>())
+                .Build()
         };
 
         var result = JsonSerializer.Deserialize<A>(json, options)!;
@@ -49,6 +50,7 @@ public static class DerivedTypes {
                     .DerivedTypes
                     .Add<E>("type-e")
                     .Verify<IFormattable, E>())
+                .Build()
         };
 
         var json = JsonSerializer.Serialize(new D(new E()), options);
@@ -65,6 +67,7 @@ public static class DerivedTypes {
                 .Type<B>(x => x
                     .DerivedTypes
                     .AddAllAssignableTo<B>(t => t.Name))
+                .Build()
         };
 
         var json = JsonSerializer.Serialize(new A(new C("cheap")), options);
@@ -81,6 +84,7 @@ public static class DerivedTypes {
                 .Type<C>(x => x
                     .DerivedTypes
                     .AddAllAssignableTo<C>(t => t.Name))
+                .Build()
         };
 
         var json = JsonSerializer.Serialize(new C("cheap"), options);
@@ -97,6 +101,7 @@ public static class DerivedTypes {
                 .Type<B>(x => x
                     .DerivedTypes
                     .AddAllAssignableTo<B>(t => t.Name))
+                .Build()
         };
 
         var act = () => JsonSerializer
@@ -112,6 +117,7 @@ public static class DerivedTypes {
                 .Type<IFormattable>(x => x
                     .DerivedTypes
                     .AddAllAssignableTo<IFormattable, E>(t => t.Name))
+                .Build()
         };
 
         var json = JsonSerializer.Serialize(new D(new E()), options);
@@ -142,6 +148,6 @@ public static class DerivedTypes {
 
         act.Should()
             .Throw<MissingDerivedTypesException>()
-            .WithMessage($"Missing derived types:* ? {typeof(E)}");
+            .WithMessage($"Missing derived types* ? {typeof(E)}");
     }
 }
