@@ -89,7 +89,8 @@ with all derived types assignable to `Shape` from its own assembly and the assem
 as the type discriminator.
 
 > **Note:** Using the type name for discriminator may result in unstable contracts since you will not be able to deserialize
-> data when you change the type name as part of some refactoring!
+> data when you change the type name as part of some refactoring! Instead consider to add all types individually and verify
+> for completeness.
 
 ## Advanced Features
 

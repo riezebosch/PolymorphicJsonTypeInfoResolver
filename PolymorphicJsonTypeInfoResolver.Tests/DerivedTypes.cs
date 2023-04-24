@@ -40,49 +40,18 @@ public static class DerivedTypes {
     }
 
     [Fact]
-    public static void AddWithDefaultName() {
-        var options = new JsonSerializerOptions {
-            TypeInfoResolver = new PolymorphicTypeInfoResolver()
-                .Type<B>(x => x.DerivedTypes
-                    .Add<C>())
-        };
-
-        var json = JsonSerializer.Serialize(new A(new C("cheap")), options);
-
-        json.Should().Contain("""
-            "$type":"C"
-            """);
-    }
-
-    [Fact]
     public static void AddAllAssignableTo() {
         var options = new JsonSerializerOptions {
             TypeInfoResolver = new PolymorphicTypeInfoResolver()
                 .Type<B>(x => x
                     .DerivedTypes
-                    .AddAllAssignableTo<B>())
+                    .AddAllAssignableTo<B>(t => t.Name))
         };
 
         var json = JsonSerializer.Serialize(new A(new C("cheap")), options);
 
         json.Should().Contain("""
             "$type":"C"
-            """);
-    }
-
-    [Fact]
-    public static void AddAllAssignableToCustomName() {
-        var options = new JsonSerializerOptions {
-            TypeInfoResolver = new PolymorphicTypeInfoResolver()
-                .Type<B>(x => x
-                    .DerivedTypes
-                    .AddAllAssignableTo<B>(t => $"type:{t.Name}"))
-        };
-
-        var json = JsonSerializer.Serialize(new A(new C("cheap")), options);
-
-        json.Should().Contain("""
-            "$type":"type:C"
             """);
     }
 
@@ -92,7 +61,7 @@ public static class DerivedTypes {
             TypeInfoResolver = new PolymorphicTypeInfoResolver()
                 .Type<C>(x => x
                     .DerivedTypes
-                    .AddAllAssignableTo<C>())
+                    .AddAllAssignableTo<C>(t => t.Name))
         };
 
         var json = JsonSerializer.Serialize(new C("cheap"), options);
@@ -108,7 +77,7 @@ public static class DerivedTypes {
             TypeInfoResolver = new PolymorphicTypeInfoResolver()
                 .Type<B>(x => x
                     .DerivedTypes
-                    .AddAllAssignableTo<B>())
+                    .AddAllAssignableTo<B>(t => t.Name))
         };
 
         var act = () => JsonSerializer.Serialize(new A(new G<int>()), options);
@@ -122,7 +91,7 @@ public static class DerivedTypes {
             TypeInfoResolver = new PolymorphicTypeInfoResolver()
                 .Type<IFormattable>(x => x
                     .DerivedTypes
-                    .AddAllAssignableTo<IFormattable, E>())
+                    .AddAllAssignableTo<IFormattable, E>(t => t.Name))
         };
 
         var json = JsonSerializer.Serialize(new D(new E()), options);
