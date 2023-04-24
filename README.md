@@ -38,9 +38,7 @@ var options = new JsonSerializerOptions {
         .Type<Shape>(x => x
             .DerivedTypes
             .Add<Square>("square")
-            .Add<Circle>("circle")
-            .Verify<Shape>()
-            .Verify<Shape, SomeOtherLibrary.Polygon>())
+            .Add<Circle>("circle"))
 };
         
 var json = JsonSerializer.Serialize(new Box(new Circle(10)), options);
@@ -61,8 +59,23 @@ In the above code snippet, we create a new instance of JsonSerializerOptions and
 instance of PolymorphicTypeInfoResolver. We then configure the resolver to serialize objects of type Shape with a `$type` 
 property that specifies the derived type (`Square` or `Circle`). 
 
-Finally we verify that all derived types from the same assembly and all types from a another assembly are mapped. The 
-verification is optional, but it prevents you from the runtime exception:
+### Verify
+
+To make sure you added all derived types of specific contract you add `Verify<T>([...])` invocations:
+
+```csharp
+new PolymorphicTypeInfoResolver()
+    .Type<Shape>(x => x
+        .DerivedTypes
+        .Add<Square>("square")
+        .Add<Circle>("circle")
+        .Verify<Shape>() // using the assembly of Shape
+        .Verify<Shape, SomeOtherLibrary.Polygon>() // using the assembly of Polygon
+        .Verify<Shape>([assemblies]));
+)
+```
+
+The verification is optional, but it saves you from runtime exceptions when serializing/deserializing data:
 
 ```csharp
 System.NotSupportedException 
@@ -79,7 +92,8 @@ new JsonSerializerOptions {
         .Type<Shape>(x => x
             .DerivedTypes
             .AddAllAssignableTo<Shape>(t => t.Name)
-            .AddAllAssignableTo<Shape, SomeOtherLibrary.Parallelogram>(t => t.Name))
+            .AddAllAssignableTo<Shape, SomeOtherLibrary.Parallelogram>(t => t.Name)
+            .AddAllAssignableTo<Shape>([assemblies], t => t.Name))
 };
 ```
 

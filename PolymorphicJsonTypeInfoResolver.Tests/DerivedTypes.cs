@@ -8,7 +8,7 @@ public static class DerivedTypes {
     private record A(B Specification);
     private abstract record B;
     private record C(string Remark) : B;
-    private record G<T> : B;
+    private record G<T>(T Something) : B;
     private record D(IFormattable Format);
     private class E : IFormattable {
         [ExcludeFromCodeCoverage] public string ToString(string? format, IFormatProvider? formatProvider) => "x";
@@ -39,6 +39,23 @@ public static class DerivedTypes {
             .Specification
             .Should()
             .Be(new C("cheap"));
+    }
+
+    [Fact]
+    public static void AddFromAssembly() {
+        var options = new JsonSerializerOptions {
+            TypeInfoResolver = new PolymorphicTypeInfoResolver()
+                .Type<IFormattable>(x => x
+                    .DerivedTypes
+                    .Add<E>("type-e")
+                    .Verify<IFormattable, E>())
+        };
+
+        var json = JsonSerializer.Serialize(new D(new E()), options);
+
+        json.Should().Contain("""
+            "$type":"type-e"
+            """);
     }
 
     [Fact]
@@ -82,7 +99,8 @@ public static class DerivedTypes {
                     .AddAllAssignableTo<B>(t => t.Name))
         };
 
-        var act = () => JsonSerializer.Serialize(new A(new G<int>()), options);
+        var act = () => JsonSerializer
+            .Serialize(new A(new G<int>(3)), options);
 
         act.Should().Throw<NotSupportedException>();
     }
