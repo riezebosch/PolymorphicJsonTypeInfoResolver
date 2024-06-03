@@ -7,80 +7,161 @@ using NSubstitute;
 namespace PolymorphicJsonTypeInfoResolver.Tests;
 
 public class Resolver {
-    private record A(B Specification);
+    private record Box(Shape Something);
 
-    [JsonDerivedType(typeof(D), "type-d")]
+    [JsonDerivedType(typeof(Circle), "circle")]
     [JsonPolymorphic]
-    private abstract record B;
+    private interface Shape;
 
-    private record C(string Remarks) : B;
+    private record Square(double Length) : Shape;
 
-    private record D : B;
+    private record Circle(double Diameter) : Shape;
 
 
     [Fact]
     public static void Serialize() {
+        // Arrange
         var options = new JsonSerializerOptions {
-            TypeInfoResolver = new PolymorphicTypeInfoResolver()
-                .Type<B>(new JsonPolymorphismOptions {
+            TypeInfoResolver = new Builder()
+                .With<Shape>(new JsonPolymorphismOptions {
                     DerivedTypes = {
-                        new (typeof(C), "c")
+                        new (typeof(Square), "c"),
+                        new (typeof(Circle), "d")
                     }
                 })
+                .Build()
         };
 
-        var json = JsonSerializer.Serialize(new A(new C("cheap")), options);
+        // Act
+        var json = JsonSerializer.Serialize(new Box(new Square(2.0)), options);
 
+        // Assert
         json.Should().Contain("""
             "$type":"c"
             """);
     }
 
     [Fact]
-    public static void WithAttributes() {
+    public static void Add() {
+        const string json = """
+                            {
+                                "Something": {
+                                    "$type":"square",
+                                    "Length":2.1
+                                }
+                            }
+                            """;
+
         var options = new JsonSerializerOptions {
-            TypeInfoResolver = new PolymorphicTypeInfoResolver()
+            TypeInfoResolver = new Builder()
+                .With<Shape>(x => x
+                    .DerivedTypes
+                    .Add<Square>("square"))
+                .Build()
         };
 
-        var json = JsonSerializer.Serialize(new A(new D()), options);
+        var result = JsonSerializer.Deserialize<Box>(json, options)!;
 
+        result
+            .Something
+            .Should()
+            .Be(new Square(2.1));
+    }
+
+    [Fact]
+    public static void AddAdd() {
+        // Arrange
+        const string json = """
+                            [{
+                                "Something": {
+                                    "$type":"square",
+                                    "Length":2
+                                }
+                            },
+                            {
+                                "Something": {
+                                    "$type":"circle",
+                                    "Diameter":1
+                                }
+                            }]
+                            """;
+
+        var options = new JsonSerializerOptions {
+            TypeInfoResolver = new Builder()
+                .With<Shape>(x => x
+                    .DerivedTypes
+                    .Add<Square>("square")
+                    .Add<Circle>("circle"))
+                .Build()
+        };
+
+        // Act
+        var result = JsonSerializer.Deserialize<Box[]>(json, options)!;
+
+        // Assert
+        result[0].Should().Be(new Box(new Square(2)));
+        result[1].Should().Be(new Box(new Circle(1)));
+    }
+
+    [Fact]
+    public static void WithAttributes() {
+        // Arrange
+        var options = new JsonSerializerOptions {
+            TypeInfoResolver = new Builder()
+                .Build()
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(new Box(new Circle(2)), options);
+
+        // Assert
         json.Should().Contain("""
-            "$type":"type-d"
+            "$type":"circle"
             """);
     }
 
     [Fact]
-    public static void MixWithAttributes() {
+    public static void Options() {
+        // Arrange
         var options = new JsonSerializerOptions {
-            TypeInfoResolver = new PolymorphicTypeInfoResolver()
-                .Type<B>(new JsonPolymorphismOptions {
-                    DerivedTypes = {
-                        new (typeof(C), "c")
-                    }
-                })
+            TypeInfoResolver = new Builder()
+                .With<Square>(new JsonPolymorphismOptions {
+                        TypeDiscriminatorPropertyName = "$TYPE",
+                        DerivedTypes =  {
+                            new JsonDerivedType(typeof(Square), "C")
+                        }
+                    })
+                .Build()
         };
 
+        // Act
+        var json = JsonSerializer.Serialize(new Square(4), options);
 
-        var act = () => JsonSerializer.Serialize(new A(new D()), options);
-
-        act.Should().Throw<NotSupportedException>()
-            .WithMessage($"*'{typeof(D)}' is not supported by polymorphic type*");
+        // Assert
+        json.Should().Contain("""
+                              "$TYPE":"C"
+                              """);
     }
 
     [Fact]
-    public static void Options() {
+    public static void Factory() {
+        // Arrange
         var options = new JsonSerializerOptions {
-            TypeInfoResolver = new PolymorphicTypeInfoResolver(options: () =>
-                    new JsonPolymorphismOptions {
+            TypeInfoResolver = new Builder {
+                    Options = () => new() {
                         TypeDiscriminatorPropertyName = "$TYPE"
-                    })
-                .Type<C>(x => x
+                    }
+                }
+                .With<Square>(options => options
                     .DerivedTypes
-                    .Add(new JsonDerivedType(typeof(C), "C")))
+                    .Add(new JsonDerivedType(typeof(Square), "C")))
+                .Build()
         };
 
-        var json = JsonSerializer.Serialize(new C("cheap"), options);
+        // Act
+        var json = JsonSerializer.Serialize(new Square(2), options);
 
+        // Assert
         json.Should().Contain("""
             "$TYPE":"C"
             """);
@@ -90,37 +171,41 @@ public class Resolver {
     public void Deserialize() {
         const string json = """
             {
-                "Specification": {
+                "Something": {
                     "$type":"c",
-                    "Remarks":"cheap"
+                    "Length":3
                 }
             }
             """;
 
         var options = new JsonSerializerOptions {
-            TypeInfoResolver = new PolymorphicTypeInfoResolver()
-                .Type<B>(new JsonPolymorphismOptions {
+            TypeInfoResolver = new Builder()
+                .With<Shape>(new JsonPolymorphismOptions {
                     DerivedTypes   = {
-                        new (typeof(C), "c")
+                        new (typeof(Square), "c"),
+                        new (typeof(Circle), "d")
                     }
-                })
+                }).Build()
         };
 
-        var result = JsonSerializer.Deserialize<A>(json, options)!;
+        var result = JsonSerializer.Deserialize<Box>(json, options)!;
 
         result
-            .Specification
+            .Something
             .Should()
-            .Be(new C("cheap"));
+            .Be(new Square(3));
     }
 
     [Fact]
     public void NoTypeInfo() {
         var options = new JsonSerializerOptions {
-            TypeInfoResolver = new PolymorphicTypeInfoResolver(resolver: Substitute.For<IJsonTypeInfoResolver>())
+            TypeInfoResolver = new Builder {
+                    Resolver = Substitute.For<IJsonTypeInfoResolver>()
+                }
+                .Build()
         };
 
-        var act = () => JsonSerializer.Deserialize<C>("{}", options);
+        var act = () => JsonSerializer.Deserialize<Square>("{}", options);
         act.Should().Throw<NotSupportedException>();
     }
 }
